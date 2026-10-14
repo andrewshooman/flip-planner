@@ -39,6 +39,12 @@ public class OfferShortcuts
 
 		/** Items to list for the search code, best first. */
 		List<Integer> searchItems();
+
+		/** The item's buy-limit window ("Buy limit: 3,000 of 10,000 left, resets in 1h 20m"), or null. */
+		default String limitNote(int itemId)
+		{
+			return null;
+		}
 	}
 
 	private static final int MODE_INT_INPUT = 7;
@@ -107,12 +113,10 @@ public class OfferShortcuts
 		int itemId = client.getVarpValue(VarPlayerID.TRADINGPOST_SEARCH);
 		boolean buying = client.getVarbitValue(VarbitID.GE_NEWOFFER_TYPE) == 0;
 		long[] s = buying ? a.buy(itemId) : a.sell(itemId);
-		if (s == null)
-		{
-			return;
-		}
-		long value = price ? s[0] : s[1];
-		if (value <= 0)
+		long value = s == null ? 0 : price ? s[0] : s[1];
+		// The buy limit matters when choosing how many to buy, suggested item or not.
+		String limit = buying && !price ? a.limitNote(itemId) : null;
+		if (value <= 0 && limit == null)
 		{
 			return;
 		}
@@ -121,9 +125,34 @@ public class OfferShortcuts
 		{
 			return;
 		}
-		String text = "GE Tycoon suggests: " + (buying ? "buy " : "sell ")
-			+ (price ? "at " + QuantityFormatter.formatNumber(value) + " gp each" : QuantityFormatter.formatNumber(value));
+		// Lines from an earlier box, in case the game didn't clear the layer, or the same box shown twice.
+		Widget[] old = parent.getDynamicChildren();
+		for (Widget w : old == null ? new Widget[0] : old)
+		{
+			if (w != null && HINT.equals(w.getName()))
+			{
+				w.setHidden(true);
+			}
+		}
+		if (value > 0)
+		{
+			addLine(parent, "GE Tycoon suggests: " + (buying ? "buy " : "sell ")
+				+ (price ? "at " + QuantityFormatter.formatNumber(value) + " gp each" : QuantityFormatter.formatNumber(value)), 8);
+		}
+		if (limit != null)
+		{
+			addLine(parent, (value > 0 ? "" : "GE Tycoon: ") + limit, value > 0 ? 24 : 8);
+		}
+	}
+
+	/** Names the hint lines, so a later box can find them. */
+	private static final String HINT = "GE Tycoon hint";
+
+	/** A line of text in the chatbox layer, y pixels above its bottom edge. */
+	private static void addLine(Widget parent, String text, int y)
+	{
 		Widget hint = parent.createChild(-1, WidgetType.TEXT);
+		hint.setName(HINT);
 		hint.setText(text);
 		hint.setFontId(FontID.PLAIN_12);
 		hint.setTextColor(TEXT_COLOR);
@@ -131,7 +160,7 @@ public class OfferShortcuts
 		hint.setXTextAlignment(WidgetTextAlignment.CENTER);
 		hint.setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM);
 		hint.setOriginalX(0);
-		hint.setOriginalY(8);
+		hint.setOriginalY(y);
 		hint.setWidthMode(WidgetSizeMode.MINUS);
 		hint.setOriginalWidth(0);
 		hint.setOriginalHeight(16);

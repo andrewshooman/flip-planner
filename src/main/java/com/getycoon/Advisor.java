@@ -53,6 +53,7 @@ class Advisor implements OfferShortcuts.Advice
 	private volatile Long runCash;
 	/** Live dip alerts: item -> {price, qty}, and their panel lines, newest first. */
 	private volatile Map<Integer, long[]> dipBuys = Collections.emptyMap();
+	private volatile java.util.function.IntFunction<String> limits = id -> null;
 	private volatile PanelModel last = new PanelModel();
 
 	Advisor(OkHttpClient http, Gson gson, GeTycoonConfig config, Consumer<PanelModel> show)
@@ -65,17 +66,17 @@ class Advisor implements OfferShortcuts.Advice
 	synchronized void setError(String e)
 	{
 		error = e;
-		last = last.copy();
-		last.error = e;
-		push(last);
+		PanelModel m = last.copy();
+		m.error = e;
+		publish(m);
 	}
 
 	synchronized void setTradeFile(String f)
 	{
 		tradeFile = f;
-		last = last.copy();
-		last.tradeFile = f;
-		push(last);
+		PanelModel m = last.copy();
+		m.tradeFile = f;
+		publish(m);
 	}
 
 	/** Called on the worker thread after each successful run. */
@@ -109,10 +110,22 @@ class Advisor implements OfferShortcuts.Advice
 	synchronized void setDips(Map<Integer, long[]> buys, List<String> lines)
 	{
 		dipBuys = buys;
-		last = last.copy();
-		last.dips.clear();
-		last.dips.addAll(lines);
-		push(last);
+		PanelModel m = last.copy();
+		m.dips.clear();
+		m.dips.addAll(lines);
+		publish(m);
+	}
+
+	/** Where the buy-limit line for the GE quantity box comes from. */
+	void setLimits(java.util.function.IntFunction<String> limits)
+	{
+		this.limits = limits;
+	}
+
+	@Override
+	public String limitNote(int itemId)
+	{
+		return limits.apply(itemId);
 	}
 
 	Recommender.Result lastResult()
@@ -174,6 +187,13 @@ class Advisor implements OfferShortcuts.Advice
 		return ids;
 	}
 
+	/** Makes m the current model and shows it. Callers hold the lock and have finished filling m. */
+	private void publish(PanelModel m)
+	{
+		last = m;
+		push(m);
+	}
+
 	private void push(PanelModel m)
 	{
 		SwingUtilities.invokeLater(() -> show.accept(m));
@@ -213,8 +233,6 @@ class Advisor implements OfferShortcuts.Advice
 		runCash = gp;
 
 		PanelModel m = new PanelModel();
-		m.tradeFile = tradeFile;
-		m.dips.addAll(last.dips);
 		try
 		{
 			if (recommender == null)
@@ -250,12 +268,18 @@ class Advisor implements OfferShortcuts.Advice
 			m.error = "Couldn't get prices: " + e.getMessage() + ". Try Refresh in a minute.";
 		}
 		m.loading = false;
-		if (m.error == null && error != null)
+		synchronized (this)
 		{
-			m.error = error;
+			// Dip alerts, the trade file or an error may have changed while the model ran.
+			m.tradeFile = tradeFile;
+			m.dips.clear();
+			m.dips.addAll(last.dips);
+			if (m.error == null && error != null)
+			{
+				m.error = error;
+			}
+			publish(m);
 		}
-		last = m;
-		push(m);
 		if (m.error == null)
 		{
 			onResult.run();
@@ -309,6 +333,15 @@ class Advisor implements OfferShortcuts.Advice
 			row.qty = h.qty;
 			row.advice = h.action.label;
 			row.tone = h.action.tone;
+			row.cost = h.cost;
+			if (h.ask != null && h.pnl != null)
+			{
+				row.value = (double) h.ask * h.qty;
+				row.pnl = h.pnl;
+				m.holdValue = (Double.isNaN(m.holdValue) ? 0 : m.holdValue) + row.value;
+				m.unrealised = (Double.isNaN(m.unrealised) ? 0 : m.unrealised) + row.pnl;
+				m.holdCost += row.cost;
+			}
 			m.holds.add(row);
 			if (h.action.price != null && h.action.price > 0)
 			{

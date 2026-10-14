@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.config.Range;
 import net.runelite.client.config.Units;
 
@@ -152,7 +153,7 @@ public interface GeTycoonConfig extends Config
 		return true;
 	}
 
-	@ConfigItem(keyName = "dipAlerts", name = "Dip alerts", description = "While you play, check the newest 5-minute prices every 2 minutes and alert when a liquid item drops well under its 24h average on heavy volume. Act within about 20 minutes or skip it.",
+	@ConfigItem(keyName = "dipAlerts", name = "Dip alerts", description = "While you play, check the newest 5-minute prices every 2 minutes and alert when a liquid item drops well under its 24h average on heavy volume. Sized to your free gp (above the reserve, not in offers or items) and what's left of the buy limit; no free gp, no alert. Act within about 20 minutes or skip it.",
 		section = dips, position = 0)
 	default boolean dipAlerts()
 	{
@@ -166,5 +167,26 @@ public interface GeTycoonConfig extends Config
 	default int dipDrop()
 	{
 		return 8;
+	}
+
+	@ConfigItem(keyName = "buyLimits", name = "Buy-limit timers", description = "Show how much of an item's 4-hour buy limit is left and when it resets, in item tooltips and the GE quantity box (from the trades GE Tycoon recorded)",
+		section = shortcuts, position = 12)
+	default boolean buyLimits()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "skipKey", name = "Skip suggestion key", description = "Skips the suggested buy and shows the next one (same as the Skip button)",
+		section = shortcuts, position = 10)
+	default Keybind skipKey()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(keyName = "graphKey", name = "Price graph key", description = "Opens the price graph of the item in the current suggestion",
+		section = shortcuts, position = 11)
+	default Keybind graphKey()
+	{
+		return Keybind.NOT_SET;
 	}
 }

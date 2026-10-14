@@ -22,7 +22,7 @@ GE Tycoon brings the model behind the GE Tycoon web app (https://andrewshooman.g
   Each slot also shows how long its offer has been up: green while it's fine, amber when it's getting old, red when it should be cancelled, blue when it needs collecting.
 - **Notifications** when a buy or sell completes, and optionally when a new hourly plan has buys for your free slots. Optional game-chat messages too, with the profit after tax when a sell finishes, and a *GP drop*: a floating "+12.3K gp" at the right of the game view, like an XP drop.
 - **Stats and price graphs.**
-  - The Stats tab shows profit for today, the last 7 days and all time, plus flips, win rate, ROI, tax paid, daily profit bars, best and worst items, and recent flips.
+  - The Stats tab shows profit for today, the last 7 days and all time, plus flips, win rate, ROI, tax paid, a profit-over-time line (with the unrealised profit on what you hold), daily profit bars, best and worst items, and recent flips.
   - Profit and gp per hour for the current session, since you logged in.
   - Right-click a suggestion or a holding for a 7-day price graph with the suggested buy and sell prices marked.
   - In the game too: right-click any tradeable item in your inventory, bank or GE and pick **Price graph**. The option only opens the graph window; it does nothing in the game.
@@ -36,11 +36,14 @@ GE Tycoon brings the model behind the GE Tycoon web app (https://andrewshooman.g
   - **What it does:** while you play, GE Tycoon checks the newest 5-minute prices every 2 minutes. When a liquid item suddenly trades well under its 24-hour average on heavy volume, you get a notification and a chat line, for example *"Rune platebody dipped 11% to 37,200. Buy up to 53 at 37,200, sell at 41,480 (+210K); sell anyway after 6h."*
   - **Where it shows:** the item also appears in the panel, in the `gt` search and in the price hint for 30 minutes.
   - **Testing:** in a replay of two months of real 5-minute trades, this made about +56k a day on the month it wasn't tuned on. The same trades at random moments lost money.
+  - **Sizing:** the quantity fits your free gp (above your reserve, not in offers or items) and what's left of the item's buy limit. With no free gp there's no alert.
   - **Catch:** it only pays if you act within about 20 minutes, and a single trade can lose money. Turn it on under *Dip alerts* in the settings.
 - **What to buy.** The side panel lists the model's buy orders for your stack: the item, price, quantity, where to sell, and the expected profit. Only orders worth the clicks are shown, so some check-ins have nothing to buy. That's fine.
-- **What to do with what you hold.** For each item you hold, the panel says list at a price, hold (with the breakeven price), sell now, or cut.
+- **What to do with what you hold.** For each item you hold, the panel says list at a price, hold (with the breakeven price), sell now, or cut, plus what it's worth now and the profit or loss after tax if you sold it (with a total for everything you hold).
 - **Help in the GE:**
   - **Search:** type `gt` in the GE item search to list the suggested items.
+  - **Buy-limit timers:** hover an item (or open the GE quantity box when buying) to see how much of its 4-hour buy limit is left and when it resets, for example *"Buy limit: 3,000 of 10,000 left, resets in 1h 20m"*. This counts the trades GE Tycoon recorded, so purchases made outside RuneLite aren't included.
+  - **Keybinds (optional):** set a *Skip suggestion key* and a *Price graph key* in the settings. They only work the plugin's own buttons; nothing is typed into the game.
   - **Price and quantity:** when the price or quantity box is open, a line in the chatbox shows the suggested number, for example *"GE Tycoon suggests: buy at 1,234 gp each"*. You type it in yourself. RuneLite doesn't allow plugins to type into the chatbox.
 - **Trade tracking.** Every GE offer you make is recorded with its fills and average prices, including fills that happened while you were logged out. Your profit after tax shows in the panel.
 - **Permanent history on your PC.** Trades are saved as you make them in RuneLite's data folder for the plugin: `.runelite/plugin-data/ge-tycoon/` in your home folder. **Export trades…** at the bottom of the panel saves a copy anywhere you choose (for example `D:\GE-Tycoon`). The web app's **Import RuneLite** button reads either file. If you tested the plugin under its earlier name, Flip Planner, move your files from `.runelite/plugin-data/flip-planner/` to `.runelite/plugin-data/ge-tycoon/`.
@@ -51,18 +54,11 @@ Nothing is automated: you place every offer and type every number. Prices come f
 
 Once it's accepted on the Plugin Hub: in RuneLite, open the wrench (Configuration) → **Plugin Hub** → search **GE Tycoon** → **Install**.
 
-## What to try, and what to report back
-- [ ] The side panel fills in within about 10 seconds of opening it: buy orders, then
-      your items, then profit.
-- [ ] Type `gt` in the GE item search. Do the suggested items show up as the results?
-- [ ] Start a buy for a suggested item and click **Enter price**. Does a line
-      *"GE Tycoon suggests: buy at … gp each"* appear in the chatbox?
-- [ ] The same for **Enter quantity**.
-- [ ] Place an offer, let it fill (or partly fill), and log out and back in. Is the trade
-      in the panel's profit and in
-      `%USERPROFILE%\.runelite\plugin-data\ge-tycoon\account-<number>.json`, counted once?
-
 To build `ge-tycoon.jar` yourself, you need JDK 11 or newer. Run `./gradlew jar` here, and the jar is in `build/libs/`.
+
+## Support
+
+GE Tycoon is free, and every feature stays free. If it makes you gp and you'd like to say thanks, you can send a tip on Venmo: [@Andrew-Shooman](https://venmo.com/u/Andrew-Shooman). Entirely optional.
 
 ## Development
 
